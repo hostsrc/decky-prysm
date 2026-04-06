@@ -1,0 +1,10 @@
+{
+  "preferred_client": "vesktop",
+  "auto_join_channel": "",
+  "viewer_quality": "720p30",
+  "viewer_bitrate": 5000,
+  "viewer_password": "",
+  "capture_method": "pipewire",
+  "audio_enabled": true,
+  "last_voice_channel_id": ""
+}

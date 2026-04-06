@@ -1,0 +1,140 @@
+import { useState } from "react";
+import {
+  ButtonItem,
+  PanelSectionRow,
+  DropdownItem,
+  ToggleField,
+} from "@decky/ui";
+import { toaster, addEventListener } from "@decky/api";
+import {
+  viewerStart,
+  viewerStop,
+  setSetting,
+  type PrysmStatus,
+  type PrysmSettings,
+} from "../lib/backend";
+
+interface ViewerPanelProps {
+  status: PrysmStatus;
+  settings: PrysmSettings;
+  onRefresh: () => void;
+  onSettingsRefresh: () => void;
+}
+
+const QUALITY_OPTIONS = [
+  { data: "480p30", label: "480p 30fps (Low)" },
+  { data: "720p30", label: "720p 30fps (Balanced)" },
+  { data: "720p60", label: "720p 60fps (Smooth)" },
+  { data: "1080p30", label: "1080p 30fps (HD)" },
+  { data: "1080p60", label: "1080p 60fps (Best)" },
+];
+
+const PRYSM_PURPLE = "#a855f7";
+
+export function ViewerPanel({ status, settings, onRefresh, onSettingsRefresh }: ViewerPanelProps) {
+  const [busy, setBusy] = useState(false);
+  const isLive = status.mode === "viewer";
+
+  const handleStart = async () => {
+    setBusy(true);
+    try {
+      const result = await viewerStart();
+      if (result.success) {
+        toaster.toast({
+          title: "Prysm Viewer Live!",
+          body: result.url ?? "Open the URL on any device",
+        });
+      } else {
+        toaster.toast({ title: "Prysm", body: result.error ?? "Failed to start viewer" });
+      }
+      onRefresh();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleStop = async () => {
+    setBusy(true);
+    try {
+      await viewerStop();
+      toaster.toast({ title: "Prysm", body: "Viewer stopped" });
+      onRefresh();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      {/* Viewer URL display when live */}
+      {isLive && status.viewer_url && (
+        <PanelSectionRow>
+          <div
+            style={{
+              padding: "10px 12px",
+              borderRadius: "8px",
+              background: `${PRYSM_PURPLE}15`,
+              border: `1px solid ${PRYSM_PURPLE}33`,
+              fontSize: "12px",
+              wordBreak: "break-all",
+              fontFamily: "monospace",
+            }}
+          >
+            <div style={{ fontWeight: 700, marginBottom: "4px", color: PRYSM_PURPLE }}>
+              Viewer URL
+            </div>
+            <div style={{ opacity: 0.9 }}>{status.viewer_url}</div>
+            <div style={{ marginTop: "6px", opacity: 0.5, fontSize: "11px" }}>
+              Open this on any device on the same network.
+              Share this browser tab in Discord!
+            </div>
+          </div>
+        </PanelSectionRow>
+      )}
+
+      {/* Start / Stop button */}
+      <PanelSectionRow>
+        <ButtonItem
+          layout="below"
+          onClick={isLive ? handleStop : handleStart}
+          disabled={busy}
+        >
+          {busy
+            ? "Working..."
+            : isLive
+              ? "Stop Viewer"
+              : "Start Prysm Viewer"}
+        </ButtonItem>
+      </PanelSectionRow>
+
+      {/* Quality preset */}
+      {!isLive && (
+        <PanelSectionRow>
+          <DropdownItem
+            label="Quality"
+            rgOptions={QUALITY_OPTIONS}
+            selectedOption={settings.viewer_quality ?? "720p30"}
+            onChange={async (opt: { data: string; label: string }) => {
+              await setSetting("viewer_quality", opt.data);
+              onSettingsRefresh();
+            }}
+          />
+        </PanelSectionRow>
+      )}
+
+      {/* Audio toggle */}
+      {!isLive && (
+        <PanelSectionRow>
+          <ToggleField
+            label="Include Audio"
+            checked={settings.audio_enabled ?? true}
+            onChange={async (val: boolean) => {
+              await setSetting("audio_enabled", val);
+              onSettingsRefresh();
+            }}
+          />
+        </PanelSectionRow>
+      )}
+    </>
+  );
+}

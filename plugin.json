@@ -1,0 +1,11 @@
+{
+  "name": "Prysm",
+  "author": "hostsrc",
+  "flags": ["root"],
+  "api_version": 1,
+  "publish": {
+    "tags": ["streaming", "discord", "screen-share", "webrtc", "casting"],
+    "description": "Split your screen everywhere. One-tap Discord Go Live + WebRTC viewer for Steam Deck.",
+    "image": "https://raw.githubusercontent.com/hostsrc/decky-prysm/main/assets/prysm-banner.png"
+  }
+}
