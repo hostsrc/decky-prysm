@@ -1478,6 +1478,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
+ "bytes",
  "clap",
  "nix 0.29.0",
  "serde",

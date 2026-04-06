@@ -31,6 +31,7 @@ clap = { version = "4", features = ["derive"] }
 
 # Process management (for FFmpeg in MVP phase)
 nix = { version = "0.29", features = ["signal", "process"] }
+bytes = "1.11.1"
 
 [profile.release]
 opt-level = "z"

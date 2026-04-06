@@ -125,8 +125,6 @@ pub async fn start_capture_supervisor(
         loop {
             match sock.recv(&mut buf).await {
                 Ok(n) if n > 0 => {
-                    rtp_stats.rtp_packets_recv.inc();
-                    rtp_stats.rtp_bytes_recv.add(n as u64);
                     let _ = tx_rtp.send(buf[..n].to_vec());
                 }
                 Ok(_) => {}
