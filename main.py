@@ -8,12 +8,14 @@ Two modes:
 """
 
 import asyncio
+import glob
 import json
 import os
 import signal
 import socket
 import struct
 import subprocess
+import time
 from enum import Enum
 from pathlib import Path
 from typing import Optional
@@ -185,166 +187,123 @@ class DiscordIPC:
 
 
 # ---------------------------------------------------------------------------
-# Capture pipeline manager (GStreamer + PipeWire/kmsgrab)
+# Streaming engine: prysm-engine (Rust binary)
 # ---------------------------------------------------------------------------
 
-class CapturePipeline:
-    """Manages GStreamer capture pipeline for the WebRTC viewer mode."""
+class StreamEngine:
+    """Manages the prysm-engine Rust binary.
 
-    QUALITY_PRESETS = {
-        "480p30":  {"width": 854,  "height": 480,  "fps": 30, "bitrate": 2500},
-        "720p30":  {"width": 1280, "height": 720,  "fps": 30, "bitrate": 5000},
-        "720p60":  {"width": 1280, "height": 720,  "fps": 60, "bitrate": 8000},
-        "1080p30": {"width": 1920, "height": 1080, "fps": 30, "bitrate": 8000},
-        "1080p60": {"width": 1920, "height": 1080, "fps": 60, "bitrate": 12000},
-    }
+    Architecture:
+      Gamescope → kmsgrab → FFmpeg (VAAPI H.264) → RTP → prysm-engine → WebRTC → Browser
+
+    The Rust engine handles FFmpeg supervision (auto-restart on format changes),
+    RTP relay, WebRTC signaling (WHEP), and the viewer page.
+    Python only starts/stops the binary — zero Python in the streaming hot path.
+    """
+
+    ENGINE_PORT = 7770
 
     def __init__(self) -> None:
-        self._process: Optional[subprocess.Popen] = None
+        self._proc: Optional[subprocess.Popen] = None
         self._running = False
+        self._engine_bin = str(Path(decky.DECKY_PLUGIN_DIR) / "bin" / "prysm-engine")
+        decky.logger.info(f"Engine binary: {self._engine_bin}")
 
     @property
     def running(self) -> bool:
-        return self._running and self._process is not None and self._process.poll() is None
+        return self._running and self._proc is not None and self._proc.poll() is None
+
+    @property
+    def ffmpeg_ok(self) -> bool:
+        # Engine manages FFmpeg internally — check if engine is alive
+        return self.running
 
     def start(self, quality: str = "720p30", audio: bool = True) -> bool:
         if self.running:
-            decky.logger.warning("Capture pipeline already running")
+            decky.logger.warning("Engine already running")
             return True
 
-        preset = self.QUALITY_PRESETS.get(quality, self.QUALITY_PRESETS["720p30"])
+        if not os.path.isfile(self._engine_bin):
+            decky.logger.error(f"Engine binary not found: {self._engine_bin}")
+            return False
 
-        pipeline = self._build_pipeline(preset, audio)
-        decky.logger.info(f"Starting capture: {quality} pipeline")
+        os.makedirs("/tmp/prysm", exist_ok=True)
+        os.chmod(self._engine_bin, 0o755)
+
+        # Copy viewer HTML for the engine to serve
+        src = Path(decky.DECKY_PLUGIN_DIR) / "assets" / "viewer-webrtc.html"
+        dst = Path("/tmp/prysm/viewer.html")
+        if src.exists():
+            dst.write_text(src.read_text())
+
+        cmd = [
+            self._engine_bin,
+            "--port", str(self.ENGINE_PORT),
+            "--quality", quality,
+            "--stats-interval", "5",
+            "--viewer-path", "/tmp/prysm/viewer.html",
+        ]
+
+        if not audio:
+            cmd.append("--no-audio")
 
         try:
             env = os.environ.copy()
-            env["DISPLAY"] = ":1"  # Gamescope game display
             env["XDG_RUNTIME_DIR"] = "/run/user/1000"
+            env["RUST_LOG"] = "info"
 
-            self._process = subprocess.Popen(
-                pipeline,
-                shell=True,
+            self._proc = subprocess.Popen(
+                cmd,
                 env=env,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                stdout=open("/tmp/prysm/engine.log", "a"),
+                stderr=subprocess.STDOUT,
                 preexec_fn=os.setsid,
             )
             self._running = True
-            decky.logger.info(f"Capture pipeline started (PID {self._process.pid})")
+            decky.logger.info(f"Engine started (PID {self._proc.pid})")
+
+            # Quick health check
+            time.sleep(2)
+            if self._proc.poll() is not None:
+                decky.logger.error(f"Engine died immediately (exit {self._proc.returncode})")
+                self._proc = None
+                self._running = False
+                return False
+
             return True
         except Exception as e:
-            decky.logger.error(f"Failed to start capture: {e}")
+            decky.logger.error(f"Failed to start engine: {e}")
             return False
 
+    def check_and_restart(self) -> None:
+        """Check if engine died and restart it."""
+        if not self._running:
+            return
+        if self._proc is not None and self._proc.poll() is not None:
+            decky.logger.warning(f"Engine exited ({self._proc.returncode}) — restarting")
+            self._proc = None
+            self._running = False
+            # The engine manages FFmpeg restarts internally,
+            # so if the engine itself dies, just restart it.
+            self.start()
+
     def stop(self) -> None:
-        if self._process:
+        if self._proc:
             try:
-                os.killpg(os.getpgid(self._process.pid), signal.SIGTERM)
-                self._process.wait(timeout=5)
-            except (ProcessLookupError, subprocess.TimeoutExpired):
+                os.killpg(os.getpgid(self._proc.pid), signal.SIGTERM)
+                self._proc.wait(timeout=5)
+            except (ProcessLookupError, subprocess.TimeoutExpired, OSError):
                 try:
-                    os.killpg(os.getpgid(self._process.pid), signal.SIGKILL)
-                except ProcessLookupError:
+                    os.killpg(os.getpgid(self._proc.pid), signal.SIGKILL)
+                except (ProcessLookupError, OSError):
                     pass
-            self._process = None
+            self._proc = None
         self._running = False
-        decky.logger.info("Capture pipeline stopped")
+        decky.logger.info("Engine stopped")
 
-    def _build_pipeline(self, preset: dict, audio: bool) -> str:
-        """Build a GStreamer pipeline that outputs to an HTTP endpoint."""
-        w, h, fps, bitrate = preset["width"], preset["height"], preset["fps"], preset["bitrate"]
-
-        # Video: PipeWire source → scale → VAAPI H.264 encode
-        video = (
-            f"gst-launch-1.0 -e "
-            f"pipewiresrc do-timestamp=true ! "
-            f"videoconvert ! "
-            f"videoscale ! video/x-raw,width={w},height={h} ! "
-            f"videorate ! video/x-raw,framerate={fps}/1 ! "
-            f"vaapih264enc bitrate={bitrate} tune=low-power ! "
-            f"video/x-h264,profile=main ! "
-            f"h264parse ! "
-            f"mpegtsmux name=mux ! "
-            f"hlssink location=/tmp/prysm/segment_%05d.ts "
-            f"playlist-location=/tmp/prysm/stream.m3u8 "
-            f"target-duration=2 max-files=5 "
-        )
-
-        if audio:
-            # Add audio from PulseAudio default monitor
-            video = video.replace(
-                "mpegtsmux name=mux",
-                "mpegtsmux name=mux "
-                "pulsesrc device=$(pactl get-default-sink).monitor ! "
-                "audioconvert ! audioresample ! "
-                "audio/x-raw,rate=48000,channels=2 ! "
-                "avenc_aac bitrate=128000 ! "
-                "aacparse ! mux."
-            )
-
-        return video
-
-    @staticmethod
-    def ensure_output_dir() -> None:
-        os.makedirs("/tmp/prysm", exist_ok=True)
-
-
-# ---------------------------------------------------------------------------
-# Lightweight HTTP server for WebRTC viewer
-# ---------------------------------------------------------------------------
-
-class ViewerServer:
-    """Simple HTTP server that serves the viewer page and HLS stream."""
-
-    def __init__(self, port: int = VIEWER_PORT) -> None:
-        self._port = port
-        self._process: Optional[subprocess.Popen] = None
-
-    @property
-    def running(self) -> bool:
-        return self._process is not None and self._process.poll() is None
-
-    def start(self) -> bool:
-        if self.running:
-            return True
-
-        self._write_viewer_page()
-
-        try:
-            self._process = subprocess.Popen(
-                [
-                    "python3", "-m", "http.server",
-                    str(self._port),
-                    "--directory", "/tmp/prysm",
-                    "--bind", "0.0.0.0",
-                ],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                preexec_fn=os.setsid,
-            )
-            decky.logger.info(f"Viewer server started on port {self._port}")
-            return True
-        except Exception as e:
-            decky.logger.error(f"Failed to start viewer server: {e}")
-            return False
-
-    def stop(self) -> None:
-        if self._process:
-            try:
-                os.killpg(os.getpgid(self._process.pid), signal.SIGTERM)
-                self._process.wait(timeout=3)
-            except (ProcessLookupError, subprocess.TimeoutExpired):
-                try:
-                    os.killpg(os.getpgid(self._process.pid), signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-            self._process = None
-        decky.logger.info("Viewer server stopped")
-
-    def get_url(self) -> str:
+    def get_viewer_url(self) -> str:
         ip = self._get_local_ip()
-        return f"http://{ip}:{self._port}/viewer.html"
+        return f"http://{ip}:{self.ENGINE_PORT}/"
 
     @staticmethod
     def _get_local_ip() -> str:
@@ -357,63 +316,6 @@ class ViewerServer:
         except Exception:
             return "localhost"
 
-    @staticmethod
-    def _write_viewer_page() -> None:
-        os.makedirs("/tmp/prysm", exist_ok=True)
-        viewer_html = Path(decky.DECKY_PLUGIN_DIR) / "assets" / "viewer.html"
-        dest = Path("/tmp/prysm/viewer.html")
-        if viewer_html.exists():
-            dest.write_text(viewer_html.read_text())
-        else:
-            # Fallback inline viewer
-            dest.write_text(VIEWER_HTML_FALLBACK)
-
-
-# Inline fallback viewer page — see assets/viewer.html for the full version
-VIEWER_HTML_FALLBACK = """<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Prysm Viewer</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{background:#0a0a0f;color:#e0e0e0;font-family:system-ui,-apple-system,sans-serif;overflow:hidden;height:100vh}
-#player{width:100vw;height:100vh;object-fit:contain;background:#000}
-.overlay{position:fixed;top:0;left:0;right:0;padding:1rem;background:linear-gradient(to bottom,rgba(0,0,0,.7),transparent);z-index:10;display:flex;align-items:center;gap:1rem;opacity:0;transition:opacity .3s}
-.overlay:hover{opacity:1}
-.prysm-logo{font-size:1.25rem;font-weight:700;background:linear-gradient(135deg,#a855f7,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.status{font-size:.85rem;opacity:.7}
-</style>
-</head>
-<body>
-<div class="overlay">
-  <span class="prysm-logo">PRYSM</span>
-  <span class="status" id="status">Connecting...</span>
-</div>
-<video id="player" autoplay muted playsinline></video>
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-<script>
-const video = document.getElementById('player');
-const status = document.getElementById('status');
-const src = '/stream.m3u8';
-
-if (Hls.isSupported()) {
-  const hls = new Hls({ liveSyncDuration: 1, liveMaxLatencyDuration: 3 });
-  hls.loadSource(src);
-  hls.attachMedia(video);
-  hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play(); status.textContent = 'Live'; });
-  hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) { status.textContent = 'Reconnecting...'; setTimeout(() => hls.loadSource(src), 2000); }});
-} else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-  video.src = src;
-  video.addEventListener('loadedmetadata', () => { video.play(); status.textContent = 'Live'; });
-}
-
-// Unmute on click
-video.addEventListener('click', () => { video.muted = !video.muted; });
-</script>
-</body>
-</html>"""
 
 
 # ---------------------------------------------------------------------------
@@ -487,8 +389,7 @@ class VesktopManager:
 class Plugin:
     settings: Settings
     discord_ipc: DiscordIPC
-    capture: CapturePipeline
-    viewer: ViewerServer
+    engine: StreamEngine
     vesktop: VesktopManager
     current_mode: StreamMode
 
@@ -498,15 +399,23 @@ class Plugin:
         decky.logger.info("Prysm starting up")
         self.settings = Settings(decky.DECKY_PLUGIN_SETTINGS_DIR)
         self.discord_ipc = DiscordIPC()
-        self.capture = CapturePipeline()
-        self.viewer = ViewerServer(VIEWER_PORT)
+        self.engine = StreamEngine()
         self.vesktop = VesktopManager(self.settings.get("preferred_client", "vesktop"))
         self.current_mode = StreamMode.IDLE
-        CapturePipeline.ensure_output_dir()
+        self._monitor_running = True
+        os.makedirs("/tmp/prysm", exist_ok=True)
         decky.logger.info("Prysm ready")
+
+        # Background monitor: auto-restart FFmpeg when Gamescope
+        # changes framebuffer format (QAM overlay, notifications, etc.)
+        while self._monitor_running:
+            await asyncio.sleep(3)
+            if self.current_mode == StreamMode.VIEWER:
+                self.engine.check_and_restart()
 
     async def _unload(self) -> None:
         decky.logger.info("Prysm shutting down")
+        self._monitor_running = False
         await self.stop_all()
         self.discord_ipc.disconnect()
 
@@ -523,10 +432,10 @@ class Plugin:
     async def get_status(self) -> dict:
         discord_running = self.vesktop.is_running()
         discord_ipc_ok = self.discord_ipc.connected
-        viewer_running = self.viewer.running
-        capture_running = self.capture.running
+        viewer_running = self.engine.running
+        capture_running = self.engine.ffmpeg_ok
 
-        viewer_url = self.viewer.get_url() if viewer_running else ""
+        viewer_url = self.engine.get_viewer_url() if viewer_running else ""
 
         return {
             "mode": self.current_mode.value,
@@ -610,44 +519,36 @@ class Plugin:
     # -- Prysm Viewer (Approach 4) ------------------------------------------
 
     async def viewer_start(self) -> dict:
-        """Start the WebRTC/HLS viewer with capture pipeline."""
+        """Start WebRTC streaming via MediaMTX + FFmpeg."""
         quality = self.settings.get("viewer_quality", "720p30")
         audio = self.settings.get("audio_enabled", True)
 
-        CapturePipeline.ensure_output_dir()
-
-        if not self.capture.start(quality, audio):
-            return {"success": False, "error": "Failed to start capture pipeline"}
-
-        if not self.viewer.start():
-            self.capture.stop()
-            return {"success": False, "error": "Failed to start viewer server"}
+        if not self.engine.start(quality, audio):
+            return {"success": False, "error": "Failed to start stream engine"}
 
         self.current_mode = StreamMode.VIEWER
-        url = self.viewer.get_url()
+        url = self.engine.get_viewer_url()
         await decky.emit("mode_changed", StreamMode.VIEWER.value)
         await decky.emit("viewer_url", url)
 
-        decky.logger.info(f"Prysm Viewer live at {url}")
+        decky.logger.info(f"Prysm WebRTC live at {url}")
         return {"success": True, "url": url}
 
     async def viewer_stop(self) -> dict:
-        """Stop the viewer and capture pipeline."""
-        self.capture.stop()
-        self.viewer.stop()
+        """Stop WebRTC streaming."""
+        self.engine.stop()
         self.current_mode = StreamMode.IDLE
         await decky.emit("mode_changed", StreamMode.IDLE.value)
         return {"success": True}
 
     async def viewer_get_url(self) -> str:
-        return self.viewer.get_url() if self.viewer.running else ""
+        return self.engine.get_viewer_url() if self.engine.running else ""
 
     # -- Shared controls ----------------------------------------------------
 
     async def stop_all(self) -> dict:
         """Stop everything."""
-        self.capture.stop()
-        self.viewer.stop()
+        self.engine.stop()
         self.current_mode = StreamMode.IDLE
         await decky.emit("mode_changed", StreamMode.IDLE.value)
         return {"success": True}

@@ -351,10 +351,14 @@
       if (Hls.isSupported()) {
         hls = new Hls({
           liveSyncDuration: 1,
-          liveMaxLatencyDuration: 4,
+          liveMaxLatencyDuration: 2,
           liveDurationInfinity: true,
           enableWorker: true,
           lowLatencyMode: true,
+          highBufferWatchdogPeriod: 1,
+          maxBufferLength: 2,
+          maxMaxBufferLength: 4,
+          backBufferLength: 0,
         });
 
         hls.loadSource(HLS_SRC);

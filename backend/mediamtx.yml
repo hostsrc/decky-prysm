@@ -1,0 +1,21 @@
+logLevel: warn
+logDestinations: [stdout]
+
+rtsp: yes
+rtspAddress: :8554
+rtmp: no
+hls: no
+srt: no
+
+webrtc: yes
+webrtcAddress: :8889
+webrtcICEServers2: []
+webrtcLocalUDPAddress: :8189
+webrtcLocalTCPAddress: ""
+
+api: yes
+apiAddress: :9997
+
+paths:
+  screen:
+    source: publisher

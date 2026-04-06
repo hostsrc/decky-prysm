@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Prysm — Steam Deck Stream</title>
+  <style>
+    :root {
+      --prysm-purple: #a855f7;
+      --prysm-blue: #3b82f6;
+      --surface: #0a0a12;
+      --text: #e8e8f0;
+      --text-muted: #6b6b80;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--surface);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    #player {
+      width: 100vw;
+      height: 100vh;
+      object-fit: contain;
+      background: #000;
+      cursor: pointer;
+    }
+
+    .topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    body:hover .topbar,
+    body.show-ui .topbar { opacity: 1; pointer-events: auto; }
+
+    .logo {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      background: linear-gradient(135deg, var(--prysm-purple), var(--prysm-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      border-radius: 16px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 8px rgba(34,197,94,0.6);
+      animation: pulse 2s infinite;
+    }
+
+    .dot.off { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.5); animation: none; }
+
+    @keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.5 } }
+
+    .bottombar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 14px;
+      background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    body:hover .bottombar,
+    body.show-ui .bottombar { opacity: 1; pointer-events: auto; }
+
+    .btn {
+      padding: 8px 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.07);
+      color: var(--text);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+      backdrop-filter: blur(8px);
+    }
+
+    .btn:hover { background: rgba(255,255,255,0.12); }
+
+    .loading {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 16px;
+      background: var(--surface);
+      z-index: 200;
+      transition: opacity 0.4s;
+    }
+
+    .loading.hidden { opacity: 0; pointer-events: none; }
+
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(168,85,247,0.15);
+      border-top-color: var(--prysm-purple);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg) } }
+
+    .loading-text { font-size: 0.85rem; color: var(--text-muted); }
+
+    .latency {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body>
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Connecting via WebRTC...</div>
+  </div>
+
+  <div class="topbar">
+    <span class="logo">PRYSM</span>
+    <div class="pill">
+      <div class="dot" id="dot"></div>
+      <span id="status">Connecting</span>
+    </div>
+  </div>
+
+  <video id="player" autoplay muted playsinline></video>
+
+  <div class="bottombar">
+    <button class="btn" id="muteBtn" onclick="toggleMute()">Unmute</button>
+    <button class="btn" onclick="toggleFs()">Fullscreen</button>
+    <span class="latency" id="latency"></span>
+  </div>
+
+  <script>
+    const video = document.getElementById('player');
+    const loading = document.getElementById('loading');
+    const loadingText = document.getElementById('loadingText');
+    const dot = document.getElementById('dot');
+    const statusEl = document.getElementById('status');
+    const muteBtn = document.getElementById('muteBtn');
+    const latencyEl = document.getElementById('latency');
+
+    // Derive WHEP URL from current page location
+    const host = window.location.hostname;
+    // WHEP endpoint is on the same port as this page (served by prysm-engine)
+    const WHEP_URL = `http://${host}:${window.location.port}/whep`;
+
+    let pc = null;
+    let retries = 0;
+
+    function setStatus(online, text) {
+      dot.className = online ? 'dot' : 'dot off';
+      statusEl.textContent = text;
+    }
+
+    function toggleMute() {
+      video.muted = !video.muted;
+      muteBtn.textContent = video.muted ? 'Unmute' : 'Mute';
+    }
+
+    function toggleFs() {
+      document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+    }
+
+    video.addEventListener('click', toggleMute);
+
+    // Auto-hide UI
+    let hideT;
+    function showUI() {
+      document.body.classList.add('show-ui');
+      clearTimeout(hideT);
+      hideT = setTimeout(() => document.body.classList.remove('show-ui'), 3000);
+    }
+    document.addEventListener('mousemove', showUI);
+    document.addEventListener('touchstart', showUI);
+
+    async function connect() {
+      if (pc) { pc.close(); pc = null; }
+
+      loadingText.textContent = retries > 0
+        ? `Reconnecting... (${retries})`
+        : 'Connecting via WebRTC...';
+
+      pc = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+      });
+
+      pc.addTransceiver('video', { direction: 'recvonly' });
+      pc.addTransceiver('audio', { direction: 'recvonly' });
+
+      pc.ontrack = (evt) => {
+        video.srcObject = evt.streams[0];
+        video.play().catch(() => {});
+        loading.classList.add('hidden');
+        setStatus(true, 'Live (WebRTC)');
+        retries = 0;
+      };
+
+      pc.onconnectionstatechange = () => {
+        if (pc.connectionState === 'failed' || pc.connectionState === 'disconnected') {
+          setStatus(false, 'Reconnecting...');
+          retries++;
+          setTimeout(connect, 2000);
+        }
+      };
+
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+
+        // Wait for ICE gathering
+        await new Promise((resolve) => {
+          if (pc.iceGatheringState === 'complete') return resolve();
+          const check = () => {
+            if (pc.iceGatheringState === 'complete') {
+              pc.removeEventListener('icegatheringstatechange', check);
+              resolve();
+            }
+          };
+          pc.addEventListener('icegatheringstatechange', check);
+          // Timeout after 3s
+          setTimeout(resolve, 3000);
+        });
+
+        const res = await fetch(WHEP_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/sdp' },
+          body: pc.localDescription.sdp,
+        });
+
+        if (res.status !== 201) {
+          throw new Error(`WHEP ${res.status}`);
+        }
+
+        const answerSdp = await res.text();
+        await pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
+
+      } catch (err) {
+        console.warn('Connect failed:', err.message);
+        setStatus(false, 'Waiting for stream...');
+        retries++;
+        setTimeout(connect, 2000);
+      }
+    }
+
+    // Start
+    connect();
+
+    // Show latency periodically
+    setInterval(() => {
+      if (pc && pc.connectionState === 'connected') {
+        pc.getStats().then(stats => {
+          stats.forEach(s => {
+            if (s.type === 'inbound-rtp' && s.kind === 'video') {
+              const jitter = s.jitter ? (s.jitter * 1000).toFixed(0) : '?';
+              latencyEl.textContent = `jitter: ${jitter}ms`;
+            }
+          });
+        });
+      }
+    }, 2000);
+  </script>
+</body>
+</html>
