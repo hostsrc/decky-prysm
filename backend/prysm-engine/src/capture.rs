@@ -110,7 +110,8 @@ pub async fn start_capture_supervisor(
     stats: Arc<PipelineStats>,
 ) -> anyhow::Result<(broadcast::Receiver<Vec<u8>>, JoinHandle<()>)> {
     // Broadcast channel: FFmpeg → RTP packets → all WebRTC peers
-    let (tx, rx) = broadcast::channel::<Vec<u8>>(256);
+    // Large buffer to handle keyframe bursts (IDR can be 50+ packets)
+    let (tx, rx) = broadcast::channel::<Vec<u8>>(2048);
 
     // UDP socket to receive RTP from FFmpeg
     let sock = UdpSocket::bind(format!("127.0.0.1:{RTP_RECV_PORT}")).await?;
