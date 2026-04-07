@@ -1,20 +1,37 @@
 import { useState, useEffect, useCallback } from "react";
 import { definePlugin } from "@decky/api";
-import { PanelSection, PanelSectionRow, ButtonItem } from "@decky/ui";
+import {
+  PanelSection,
+  PanelSectionRow,
+  ButtonItem,
+  DropdownItem,
+  Field,
+} from "@decky/ui";
 import { FaProjectDiagram } from "react-icons/fa";
 
-import { StatusBadge } from "./components/StatusBadge";
 import { DiscordPanel } from "./components/DiscordPanel";
 import { ViewerPanel } from "./components/ViewerPanel";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { usePrysmStatus } from "./hooks/usePrysmStatus";
 import { getSettings, stopAll, type PrysmSettings } from "./lib/backend";
 
-type Tab = "discord" | "viewer" | "settings";
+type Tab = "viewer" | "discord" | "settings";
+
+const TAB_OPTIONS = [
+  { data: "viewer" as Tab, label: "Viewer" },
+  { data: "discord" as Tab, label: "Discord" },
+  { data: "settings" as Tab, label: "Settings" },
+];
+
+const MODE_LABELS: Record<string, string> = {
+  idle: "Ready",
+  discord: "Discord Go Live",
+  viewer: "Streaming",
+};
 
 function PrysmRoot() {
   const { status, loading, refresh } = usePrysmStatus();
-  const [tab, setTab] = useState<Tab>("discord");
+  const [tab, setTab] = useState<Tab>("viewer");
   const [settings, setSettings] = useState<PrysmSettings | null>(null);
 
   const refreshSettings = useCallback(async () => {
@@ -34,9 +51,7 @@ function PrysmRoot() {
     return (
       <PanelSection title="Prysm">
         <PanelSectionRow>
-          <div style={{ textAlign: "center", padding: "20px", opacity: 0.5 }}>
-            Loading...
-          </div>
+          <Field label="Status">Loading...</Field>
         </PanelSectionRow>
       </PanelSection>
     );
@@ -44,46 +59,30 @@ function PrysmRoot() {
 
   return (
     <>
-      {/* Header with status */}
       <PanelSection title="PRYSM">
+        {/* Status */}
         <PanelSectionRow>
-          <StatusBadge mode={status.mode} />
+          <Field
+            label="Status"
+            description={status.viewer_url || undefined}
+          >
+            {MODE_LABELS[status.mode] ?? status.mode}
+          </Field>
         </PanelSectionRow>
 
-        {/* Tab switcher */}
+        {/* Tab selector */}
         <PanelSectionRow>
-          <div style={{ display: "flex", gap: "4px", width: "100%" }}>
-            {(["discord", "viewer", "settings"] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                style={{
-                  flex: 1,
-                  padding: "8px 4px",
-                  fontSize: "12px",
-                  fontWeight: tab === t ? 700 : 400,
-                  background: tab === t ? "#ffffff15" : "transparent",
-                  border: tab === t ? "1px solid #ffffff22" : "1px solid transparent",
-                  borderRadius: "6px",
-                  color: tab === t ? "#fff" : "#ffffff88",
-                  cursor: "pointer",
-                  textTransform: "capitalize",
-                  transition: "all 0.15s ease",
-                }}
-              >
-                {t === "discord" ? "Discord" : t === "viewer" ? "Viewer" : "Settings"}
-              </button>
-            ))}
-          </div>
+          <DropdownItem
+            label="Mode"
+            rgOptions={TAB_OPTIONS}
+            selectedOption={tab}
+            onChange={(opt: { data: Tab; label: string }) => setTab(opt.data)}
+          />
         </PanelSectionRow>
       </PanelSection>
 
       {/* Active tab content */}
       <PanelSection>
-        {tab === "discord" && (
-          <DiscordPanel status={status} onRefresh={refresh} />
-        )}
-
         {tab === "viewer" && (
           <ViewerPanel
             status={status}
@@ -91,6 +90,10 @@ function PrysmRoot() {
             onRefresh={refresh}
             onSettingsRefresh={refreshSettings}
           />
+        )}
+
+        {tab === "discord" && (
+          <DiscordPanel status={status} onRefresh={refresh} />
         )}
 
         {tab === "settings" && (
@@ -122,13 +125,5 @@ export default definePlugin(() => ({
   name: "Prysm",
   content: <PrysmRoot />,
   icon: <FaProjectDiagram />,
-  titleView: (
-    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-      <FaProjectDiagram />
-      <span>Prysm</span>
-    </div>
-  ),
-  onDismount() {
-    // Cleanup if needed — streams continue running in background
-  },
+  onDismount() {},
 }));

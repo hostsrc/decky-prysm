@@ -14,6 +14,11 @@ import sys
 import threading
 import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from socketserver import ThreadingMixIn
+
+
+class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
+    daemon_threads = True
 
 PORT = 7770
 QUALITY = "720p30"
@@ -23,6 +28,7 @@ PRESETS = {
     "720p30":  (1280, 720, 30, 5000),
     "720p60":  (1280, 720, 60, 8000),
     "1080p30": (1920, 1080, 30, 8000),
+    "1080p60": (1920, 1080, 60, 12000),
 }
 
 VIEWER_HTML = r"""<!DOCTYPE html>
@@ -106,9 +112,11 @@ function go(){
 if(!mpegts.getFeatureList().mseLivePlayback){st.textContent='MSE not supported';return}
 player=mpegts.createPlayer({type:'mpegts',isLive:true,url:location.origin+'/stream'},{
 enableWorker:true,liveBufferLatencyChasing:true,
-liveBufferLatencyMaxLatency:1.5,liveBufferLatencyMinRemain:0.3,
-liveSync:true,liveSyncMaxLatency:1.0,liveSyncTargetLatency:0.5,
-liveSyncPlaybackRate:1.1,enableStashBuffer:false,stashInitialSize:128});
+liveBufferLatencyMaxLatency:1.5,liveBufferLatencyMinRemain:0.5,
+liveSync:true,liveSyncMaxLatency:1.2,liveSyncTargetLatency:0.8,
+liveSyncPlaybackRate:1.08,enableStashBuffer:false,stashInitialSize:384,
+autoCleanupSourceBuffer:true,autoCleanupMaxBackwardDuration:1,
+autoCleanupMinBackwardDuration:0.5});
 player.attachMediaElement(v);player.load();
 v.addEventListener('canplay',()=>{v.play();st.textContent='Live';dot.className='d on'});
 player.on(mpegts.Events.ERROR,(e,d)=>{
@@ -160,10 +168,19 @@ class Handler(BaseHTTPRequestHandler):
             clients.append(q)
         print(f"[http] +client ({len(clients)} total)")
 
+        synced = False
         try:
             while True:
                 if q:
                     chunk = q.pop(0)
+                    # Sync to TS packet boundary on first chunk
+                    if not synced:
+                        idx = chunk.find(b'\x47')
+                        if idx >= 0:
+                            chunk = chunk[idx:]
+                            synced = True
+                        else:
+                            continue
                     self.wfile.write(chunk)
                     self.wfile.flush()
                 else:
@@ -229,14 +246,15 @@ def broadcast_loop():
         print(f"[ffmpeg] Started PID={ffmpeg_proc.pid}")
 
         while True:
-            chunk = ffmpeg_proc.stdout.read(4096)
+            chunk = ffmpeg_proc.stdout.read(188 * 32)  # 6016 bytes = 32 TS packets
             if not chunk:
                 break
             total_bytes += len(chunk)
             with clients_lock:
                 for q in clients:
                     q.append(chunk)
-                    while len(q) > 500:
+                    # Keep queue tight — drop old data aggressively
+                    while len(q) > 100:
                         q.pop(0)
 
         rc = ffmpeg_proc.wait()
@@ -273,7 +291,7 @@ def main():
     threading.Thread(target=broadcast_loop, daemon=True).start()
 
     # HTTP server (blocks)
-    server = HTTPServer(("0.0.0.0", PORT), Handler)
+    server = ThreadedHTTPServer(("0.0.0.0", PORT), Handler)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

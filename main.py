@@ -187,18 +187,16 @@ class DiscordIPC:
 
 
 # ---------------------------------------------------------------------------
-# Streaming engine: prysm-engine (Rust binary)
+# Streaming engine: stream_server.py (HTTP MPEG-TS)
 # ---------------------------------------------------------------------------
 
 class StreamEngine:
-    """Manages the prysm-engine Rust binary.
+    """Manages the stream server.
 
     Architecture:
-      Gamescope → kmsgrab → FFmpeg (VAAPI H.264) → RTP → prysm-engine → WebRTC → Browser
+      Gamescope → kmsgrab → FFmpeg (VAAPI H.264) → MPEG-TS → HTTP → mpegts.js
 
-    The Rust engine handles FFmpeg supervision (auto-restart on format changes),
-    RTP relay, WebRTC signaling (WHEP), and the viewer page.
-    Python only starts/stops the binary — zero Python in the streaming hot path.
+    Simple, proven, ~0.5s latency on LAN.
     """
 
     ENGINE_PORT = 7770
@@ -206,8 +204,8 @@ class StreamEngine:
     def __init__(self) -> None:
         self._proc: Optional[subprocess.Popen] = None
         self._running = False
-        self._engine_bin = str(Path(decky.DECKY_PLUGIN_DIR) / "bin" / "prysm-engine")
-        decky.logger.info(f"Engine binary: {self._engine_bin}")
+        self._server_script = str(Path(decky.DECKY_PLUGIN_DIR) / "backend" / "stream_server.py")
+        decky.logger.info(f"Stream server: {self._server_script}")
 
     @property
     def running(self) -> bool:
@@ -215,57 +213,43 @@ class StreamEngine:
 
     @property
     def ffmpeg_ok(self) -> bool:
-        # Engine manages FFmpeg internally — check if engine is alive
         return self.running
 
     def start(self, quality: str = "720p30", audio: bool = True) -> bool:
         if self.running:
-            decky.logger.warning("Engine already running")
+            decky.logger.warning("Stream server already running")
             return True
 
-        if not os.path.isfile(self._engine_bin):
-            decky.logger.error(f"Engine binary not found: {self._engine_bin}")
+        if not os.path.isfile(self._server_script):
+            decky.logger.error(f"Stream server not found: {self._server_script}")
             return False
 
         os.makedirs("/tmp/prysm", exist_ok=True)
-        os.chmod(self._engine_bin, 0o755)
-
-        # Copy viewer HTML for the engine to serve
-        src = Path(decky.DECKY_PLUGIN_DIR) / "assets" / "viewer-webrtc.html"
-        dst = Path("/tmp/prysm/viewer.html")
-        if src.exists():
-            dst.write_text(src.read_text())
 
         cmd = [
-            self._engine_bin,
+            "python3", "-u", self._server_script,
             "--port", str(self.ENGINE_PORT),
             "--quality", quality,
-            "--stats-interval", "5",
-            "--viewer-path", "/tmp/prysm/viewer.html",
         ]
-
-        if not audio:
-            cmd.append("--no-audio")
 
         try:
             env = os.environ.copy()
             env["XDG_RUNTIME_DIR"] = "/run/user/1000"
-            env["RUST_LOG"] = "info"
 
             self._proc = subprocess.Popen(
                 cmd,
                 env=env,
-                stdout=open("/tmp/prysm/engine.log", "a"),
+                stdout=open("/tmp/prysm/server.log", "a"),
                 stderr=subprocess.STDOUT,
                 preexec_fn=os.setsid,
             )
             self._running = True
-            decky.logger.info(f"Engine started (PID {self._proc.pid})")
+            decky.logger.info(f"Stream server started (PID {self._proc.pid})")
 
             # Quick health check
-            time.sleep(2)
+            time.sleep(3)
             if self._proc.poll() is not None:
-                decky.logger.error(f"Engine died immediately (exit {self._proc.returncode})")
+                decky.logger.error(f"Stream server died immediately (exit {self._proc.returncode})")
                 self._proc = None
                 self._running = False
                 return False
