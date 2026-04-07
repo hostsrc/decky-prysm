@@ -4,8 +4,9 @@ import {
   PanelSectionRow,
   DropdownItem,
   ToggleField,
+  Field,
 } from "@decky/ui";
-import { toaster, addEventListener } from "@decky/api";
+import { toaster } from "@decky/api";
 import {
   viewerStart,
   viewerStop,
@@ -22,18 +23,16 @@ interface ViewerPanelProps {
 }
 
 const QUALITY_OPTIONS = [
-  { data: "480p30", label: "480p 30fps (Low)" },
-  { data: "720p30", label: "720p 30fps (Balanced)" },
-  { data: "720p60", label: "720p 60fps (Smooth)" },
-  { data: "1080p30", label: "1080p 30fps (HD)" },
-  { data: "1080p60", label: "1080p 60fps (Best)" },
+  { data: "480p30", label: "480p 30fps" },
+  { data: "720p30", label: "720p 30fps" },
+  { data: "720p60", label: "720p 60fps" },
+  { data: "1080p30", label: "1080p 30fps" },
+  { data: "1080p60", label: "1080p 60fps" },
 ];
 
-const PRYSM_PURPLE = "#a855f7";
-
-const STREAM_METHOD_OPTIONS = [
-  { data: "mpegts", label: "MPEG-TS (Stable, ~500ms)" },
-  { data: "webrtc", label: "WebRTC (Low latency, ~200ms)" },
+const METHOD_OPTIONS = [
+  { data: "mpegts", label: "MPEG-TS (~500ms)" },
+  { data: "webrtc", label: "WebRTC (~200ms)" },
 ];
 
 export function ViewerPanel({ status, settings, onRefresh, onSettingsRefresh }: ViewerPanelProps) {
@@ -46,11 +45,11 @@ export function ViewerPanel({ status, settings, onRefresh, onSettingsRefresh }: 
       const result = await viewerStart();
       if (result.success) {
         toaster.toast({
-          title: "Prysm Viewer Live!",
-          body: result.url ?? "Open the URL on any device",
+          title: "Prysm",
+          body: result.url ?? "Streaming started",
         });
       } else {
-        toaster.toast({ title: "Prysm", body: result.error ?? "Failed to start viewer" });
+        toaster.toast({ title: "Prysm", body: result.error ?? "Failed to start" });
       }
       onRefresh();
     } finally {
@@ -62,7 +61,7 @@ export function ViewerPanel({ status, settings, onRefresh, onSettingsRefresh }: 
     setBusy(true);
     try {
       await viewerStop();
-      toaster.toast({ title: "Prysm", body: "Viewer stopped" });
+      toaster.toast({ title: "Prysm", body: "Stopped" });
       onRefresh();
     } finally {
       setBusy(false);
@@ -71,68 +70,71 @@ export function ViewerPanel({ status, settings, onRefresh, onSettingsRefresh }: 
 
   return (
     <>
-      {/* Viewer URL shown in status field in index.tsx */}
-      {false && (
-        <PanelSectionRow></PanelSectionRow>
-      )}
-
-      {/* Start / Stop button */}
+      {/* Start / Stop — always first */}
       <PanelSectionRow>
         <ButtonItem
           layout="below"
           onClick={isLive ? handleStop : handleStart}
           disabled={busy}
         >
-          {busy
-            ? "Working..."
-            : isLive
-              ? "Stop Viewer"
-              : "Start Prysm Viewer"}
+          {busy ? "Working..." : isLive ? "Stop Streaming" : "Start Streaming"}
         </ButtonItem>
       </PanelSectionRow>
 
-      {/* Quality preset */}
-      {!isLive && (
+      {/* Status */}
+      <PanelSectionRow>
+        <Field label="Status">
+          {isLive ? "Streaming" : "Ready"}
+        </Field>
+      </PanelSectionRow>
+
+      {/* URL when live */}
+      {isLive && status.viewer_url && (
         <PanelSectionRow>
-          <DropdownItem
-            label="Quality"
-            rgOptions={QUALITY_OPTIONS}
-            selectedOption={settings.viewer_quality ?? "720p30"}
-            onChange={async (opt: { data: string; label: string }) => {
-              await setSetting("viewer_quality", opt.data);
-              onSettingsRefresh();
-            }}
-          />
+          <Field label="URL">
+            {status.viewer_url}
+          </Field>
         </PanelSectionRow>
       )}
 
-      {/* Stream method */}
+      {/* Settings — only when not streaming */}
       {!isLive && (
-        <PanelSectionRow>
-          <DropdownItem
-            label="Stream Method"
-            rgOptions={STREAM_METHOD_OPTIONS}
-            selectedOption={settings.stream_method ?? "mpegts"}
-            onChange={async (opt: { data: string; label: string }) => {
-              await setSetting("stream_method", opt.data);
-              onSettingsRefresh();
-            }}
-          />
-        </PanelSectionRow>
-      )}
+        <>
+          <PanelSectionRow>
+            <DropdownItem
+              label="Method"
+              rgOptions={METHOD_OPTIONS}
+              selectedOption={settings.stream_method ?? "mpegts"}
+              onChange={async (opt: { data: string; label: string }) => {
+                await setSetting("stream_method", opt.data);
+                onSettingsRefresh();
+              }}
+            />
+          </PanelSectionRow>
 
-      {/* Audio toggle */}
-      {!isLive && (
-        <PanelSectionRow>
-          <ToggleField
-            label="Include Audio"
-            checked={settings.audio_enabled ?? true}
-            onChange={async (val: boolean) => {
-              await setSetting("audio_enabled", val);
-              onSettingsRefresh();
-            }}
-          />
-        </PanelSectionRow>
+          <PanelSectionRow>
+            <DropdownItem
+              label="Quality"
+              rgOptions={QUALITY_OPTIONS}
+              selectedOption={settings.viewer_quality ?? "720p30"}
+              onChange={async (opt: { data: string; label: string }) => {
+                await setSetting("viewer_quality", opt.data);
+                onSettingsRefresh();
+              }}
+            />
+          </PanelSectionRow>
+
+          <PanelSectionRow>
+            <ToggleField
+              label="Audio"
+              checked={settings.audio_enabled ?? true}
+              onChange={async (val: boolean) => {
+                await setSetting("audio_enabled", val);
+                onSettingsRefresh();
+              }}
+            />
+          </PanelSectionRow>
+        </>
       )}
     </>
   );
