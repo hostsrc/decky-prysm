@@ -51,20 +51,7 @@ function PrysmRoot() {
           onSettingsRefresh={refreshSettings}
         />
 
-        {/* Stop button when streaming */}
-        {isLive && (
-          <PanelSectionRow>
-            <ButtonItem
-              layout="below"
-              onClick={async () => {
-                await stopAll();
-                refresh();
-              }}
-            >
-              Stop Streaming
-            </ButtonItem>
-          </PanelSectionRow>
-        )}
+        {/* Stop handled by the ViewerPanel button */}
       </PanelSection>
     </>
   );
