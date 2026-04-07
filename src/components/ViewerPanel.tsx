@@ -29,6 +29,8 @@ const QUALITY_OPTIONS = [
   { data: "1080p60", label: "1080p 60fps (Best)" },
 ];
 
+const PRYSM_PURPLE = "#a855f7";
+
 const STREAM_METHOD_OPTIONS = [
   { data: "mpegts", label: "MPEG-TS (Stable, ~500ms)" },
   { data: "webrtc", label: "WebRTC (Low latency, ~200ms)" },
@@ -69,30 +71,9 @@ export function ViewerPanel({ status, settings, onRefresh, onSettingsRefresh }: 
 
   return (
     <>
-      {/* Viewer URL display when live */}
-      {isLive && status.viewer_url && (
-        <PanelSectionRow>
-          <div
-            style={{
-              padding: "10px 12px",
-              borderRadius: "8px",
-              background: `${PRYSM_PURPLE}15`,
-              border: `1px solid ${PRYSM_PURPLE}33`,
-              fontSize: "12px",
-              wordBreak: "break-all",
-              fontFamily: "monospace",
-            }}
-          >
-            <div style={{ fontWeight: 700, marginBottom: "4px", color: PRYSM_PURPLE }}>
-              Viewer URL
-            </div>
-            <div style={{ opacity: 0.9 }}>{status.viewer_url}</div>
-            <div style={{ marginTop: "6px", opacity: 0.5, fontSize: "11px" }}>
-              Open this on any device on the same network.
-              Share this browser tab in Discord!
-            </div>
-          </div>
-        </PanelSectionRow>
+      {/* Viewer URL shown in status field in index.tsx */}
+      {false && (
+        <PanelSectionRow></PanelSectionRow>
       )}
 
       {/* Start / Stop button */}

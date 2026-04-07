@@ -1,8 +1,10 @@
-logLevel: warn
+logLevel: info
 logDestinations: [stdout]
 
 rtsp: yes
 rtspAddress: :8554
+rtpAddress: :18100
+rtcpAddress: :18101
 rtmp: no
 hls: no
 srt: no
@@ -10,7 +12,7 @@ srt: no
 webrtc: yes
 webrtcAddress: :8889
 webrtcICEServers2: []
-webrtcLocalUDPAddress: :8189
+webrtcLocalUDPAddress: :18189
 webrtcLocalTCPAddress: ""
 
 api: yes
