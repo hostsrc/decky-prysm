@@ -59,6 +59,10 @@ def on_response(response, results):
         flags = fcntl.fcntl(pw_fd, fcntl.F_GETFD)
         fcntl.fcntl(pw_fd, fcntl.F_SETFD, flags & ~fcntl.FD_CLOEXEC)
 
+        # Wait for the PipeWire node to appear on the main instance
+        print(f"Waiting 2s for node {nid} to appear on main PipeWire...", flush=True)
+        time.sleep(2)
+
         # Fork: child runs pw_capture, parent keeps portal alive
         pid = os.fork()
         if pid == 0:

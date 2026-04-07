@@ -129,14 +129,12 @@ int main(int argc, char *argv[])
     struct pw_context *ctx = pw_context_new(
         pw_main_loop_get_loop(d.loop), NULL, 0);
 
-    /* Try connecting to the DEFAULT PipeWire instance (not the portal FD).
-     * The portal session being active should authorize access to node. */
-    fprintf(stderr, "[main] Connecting to default PipeWire (ignoring portal FD %d)...\n", pw_fd);
+    /* Connect to the DEFAULT PipeWire instance.
+     * The portal session (kept alive by parent process) creates node on main PW.
+     * The portal FD is NOT used — it's a restricted remote with no nodes. */
+    (void)pw_fd;  /* unused — portal FD doesn't help */
+    fprintf(stderr, "[main] Connecting to default PipeWire...\n");
     d.core = pw_context_connect(ctx, NULL, 0);
-    if (!d.core) {
-        fprintf(stderr, "[main] Default connect failed, trying FD %d...\n", pw_fd);
-        d.core = pw_context_connect_fd(ctx, pw_fd, NULL, 0);
-    }
     if (!d.core) {
         fprintf(stderr, "[main] FAILED to connect\n");
         return 1;
