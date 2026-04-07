@@ -575,6 +575,44 @@ class Plugin:
     async def viewer_get_url(self) -> str:
         return self.engine.get_viewer_url() if self.engine.running else ""
 
+    async def get_stream_stats(self) -> dict:
+        """Fetch live stats from the stream server."""
+        if not self.engine.running:
+            return {"clients": 0, "total_bytes": 0, "ffmpeg_alive": False,
+                    "quality": "", "method": "", "uptime": 0}
+        try:
+            import urllib.request
+            port = self.engine.MPEGTS_PORT if self.engine._method == "mpegts" else self.engine.WEBRTC_PORT
+            url = f"http://127.0.0.1:{port}/stats"
+            if self.engine._method == "webrtc":
+                url = f"http://127.0.0.1:9997/v3/paths/list"
+
+            req = urllib.request.urlopen(url, timeout=1)
+            import json
+            data = json.loads(req.read())
+
+            if self.engine._method == "webrtc":
+                # Parse MediaMTX API response
+                items = data.get("items", [])
+                screen = items[0] if items else {}
+                return {
+                    "clients": len(screen.get("readers", [])),
+                    "total_bytes": screen.get("bytesSent", 0),
+                    "ffmpeg_alive": screen.get("ready", False),
+                    "quality": self.settings.get("viewer_quality", ""),
+                    "method": "webrtc",
+                    "uptime": 0,
+                }
+            else:
+                data["quality"] = self.settings.get("viewer_quality", "")
+                data["method"] = "mpegts"
+                data["uptime"] = 0
+                return data
+        except Exception:
+            return {"clients": 0, "total_bytes": 0, "ffmpeg_alive": self.engine.running,
+                    "quality": self.settings.get("viewer_quality", ""),
+                    "method": self.engine._method, "uptime": 0}
+
     # -- Shared controls ----------------------------------------------------
 
     async def stop_all(self) -> dict:

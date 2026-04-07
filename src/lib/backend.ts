@@ -68,3 +68,13 @@ export const viewerGetUrl = callable<[], string>("viewer_get_url");
 // Shared
 export const stopAll = callable<[], ActionResult>("stop_all");
 export const getNetworkInfo = callable<[], NetworkInfo>("get_network_info");
+export const getStreamStats = callable<[], StreamStats>("get_stream_stats");
+
+export interface StreamStats {
+  clients: number;
+  total_bytes: number;
+  ffmpeg_alive: boolean;
+  quality: string;
+  method: string;
+  uptime: number;
+}
