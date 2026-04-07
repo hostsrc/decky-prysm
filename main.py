@@ -69,6 +69,7 @@ class Settings:
             "viewer_bitrate": 5000,
             "viewer_password": "",
             "capture_method": "pipewire",
+            "stream_method": "mpegts",
             "audio_enabled": True,
             "last_voice_channel_id": "",
         }
@@ -191,21 +192,28 @@ class DiscordIPC:
 # ---------------------------------------------------------------------------
 
 class StreamEngine:
-    """Manages the stream server.
+    """Manages the stream server (MPEG-TS or MediaMTX WebRTC).
 
-    Architecture:
-      Gamescope → kmsgrab → FFmpeg (VAAPI H.264) → MPEG-TS → HTTP → mpegts.js
-
-    Simple, proven, ~0.5s latency on LAN.
+    MPEG-TS: kmsgrab → FFmpeg → MPEG-TS → HTTP → mpegts.js (~500ms)
+    WebRTC:  kmsgrab → FFmpeg → RTSP → MediaMTX → WebRTC (~200ms)
     """
 
-    ENGINE_PORT = 7770
+    MPEGTS_PORT = 7770
+    WEBRTC_PORT = 8889
+    MEDIAMTX_BIN = None
+    MEDIAMTX_CFG = None
 
     def __init__(self) -> None:
         self._proc: Optional[subprocess.Popen] = None
+        self._ffmpeg_proc: Optional[subprocess.Popen] = None
         self._running = False
-        self._server_script = str(Path(decky.DECKY_PLUGIN_DIR) / "backend" / "stream_server.py")
+        self._method = "mpegts"
+        plugin_dir = Path(decky.DECKY_PLUGIN_DIR)
+        self._server_script = str(plugin_dir / "backend" / "stream_server.py")
+        self.MEDIAMTX_BIN = str(plugin_dir / "bin" / "mediamtx")
+        self.MEDIAMTX_CFG = str(plugin_dir / "bin" / "mediamtx.yml")
         decky.logger.info(f"Stream server: {self._server_script}")
+        decky.logger.info(f"MediaMTX: {self.MEDIAMTX_BIN}")
 
     @property
     def running(self) -> bool:
@@ -215,49 +223,83 @@ class StreamEngine:
     def ffmpeg_ok(self) -> bool:
         return self.running
 
-    def start(self, quality: str = "720p30", audio: bool = True) -> bool:
+    def start(self, quality: str = "720p30", audio: bool = True, method: str = "mpegts") -> bool:
         if self.running:
-            decky.logger.warning("Stream server already running")
+            decky.logger.warning("Stream already running")
             return True
 
-        if not os.path.isfile(self._server_script):
-            decky.logger.error(f"Stream server not found: {self._server_script}")
-            return False
-
+        self._method = method
         os.makedirs("/tmp/prysm", exist_ok=True)
-
-        cmd = [
-            "python3", "-u", self._server_script,
-            "--port", str(self.ENGINE_PORT),
-            "--quality", quality,
-        ]
+        env = os.environ.copy()
+        env["XDG_RUNTIME_DIR"] = "/run/user/1000"
 
         try:
-            env = os.environ.copy()
-            env["XDG_RUNTIME_DIR"] = "/run/user/1000"
-
-            self._proc = subprocess.Popen(
-                cmd,
-                env=env,
-                stdout=open("/tmp/prysm/server.log", "a"),
-                stderr=subprocess.STDOUT,
-                preexec_fn=os.setsid,
-            )
-            self._running = True
-            decky.logger.info(f"Stream server started (PID {self._proc.pid})")
-
-            # Quick health check
-            time.sleep(3)
-            if self._proc.poll() is not None:
-                decky.logger.error(f"Stream server died immediately (exit {self._proc.returncode})")
-                self._proc = None
-                self._running = False
-                return False
-
-            return True
+            if method == "webrtc":
+                return self._start_webrtc(quality, env)
+            else:
+                return self._start_mpegts(quality, env)
         except Exception as e:
-            decky.logger.error(f"Failed to start engine: {e}")
+            decky.logger.error(f"Failed to start: {e}")
             return False
+
+    def _start_mpegts(self, quality: str, env: dict) -> bool:
+        if not os.path.isfile(self._server_script):
+            decky.logger.error(f"Not found: {self._server_script}")
+            return False
+        cmd = ["python3", "-u", self._server_script, "--port", str(self.MPEGTS_PORT), "--quality", quality]
+        self._proc = subprocess.Popen(cmd, env=env, stdout=open("/tmp/prysm/server.log", "a"),
+                                      stderr=subprocess.STDOUT, preexec_fn=os.setsid)
+        self._running = True
+        decky.logger.info(f"MPEG-TS started (PID {self._proc.pid})")
+        time.sleep(3)
+        if self._proc.poll() is not None:
+            decky.logger.error(f"MPEG-TS died (exit {self._proc.returncode})")
+            self._proc = None
+            self._running = False
+            return False
+        return True
+
+    def _start_webrtc(self, quality: str, env: dict) -> bool:
+        if not os.path.isfile(self.MEDIAMTX_BIN):
+            decky.logger.error(f"MediaMTX not found: {self.MEDIAMTX_BIN}")
+            return False
+        os.chmod(self.MEDIAMTX_BIN, 0o755)
+        presets = {"480p30": (854,480,30,2500), "720p30": (1280,720,30,5000),
+                   "720p60": (1280,720,60,8000), "1080p30": (1920,1080,30,8000),
+                   "1080p60": (1920,1080,60,12000)}
+        w, h, fps, br = presets.get(quality, presets["720p30"])
+
+        # Start MediaMTX
+        self._proc = subprocess.Popen(
+            [self.MEDIAMTX_BIN, self.MEDIAMTX_CFG],
+            stdout=open("/tmp/prysm/mediamtx.log", "a"),
+            stderr=subprocess.STDOUT, preexec_fn=os.setsid)
+        decky.logger.info(f"MediaMTX started (PID {self._proc.pid})")
+        time.sleep(2)
+        if self._proc.poll() is not None:
+            decky.logger.error("MediaMTX died")
+            self._proc = None
+            return False
+
+        # Start FFmpeg → RTSP
+        self._ffmpeg_proc = subprocess.Popen([
+            "ffmpeg", "-y", "-nostdin", "-fflags", "nobuffer", "-flags", "low_delay",
+            "-device", "/dev/dri/card0", "-framerate", str(fps), "-f", "kmsgrab", "-i", "-",
+            "-vaapi_device", "/dev/dri/renderD128",
+            "-vf", f"hwmap=derive_device=vaapi,scale_vaapi=w={w}:h={h}:format=nv12",
+            "-c:v", "h264_vaapi", "-b:v", f"{br}k", "-maxrate", f"{br}k",
+            "-bufsize", f"{br//2}k", "-g", str(fps), "-bf", "0",
+            "-f", "rtsp", "-rtsp_transport", "tcp", "rtsp://127.0.0.1:8554/screen",
+        ], env=env, stdout=open("/tmp/prysm/ffmpeg_rtsp.log", "a"),
+           stderr=subprocess.STDOUT, preexec_fn=os.setsid)
+        decky.logger.info(f"FFmpeg RTSP started (PID {self._ffmpeg_proc.pid})")
+        time.sleep(2)
+        if self._ffmpeg_proc.poll() is not None:
+            decky.logger.error("FFmpeg RTSP died")
+            self.stop()
+            return False
+        self._running = True
+        return True
 
     def check_and_restart(self) -> None:
         """Check if engine died and restart it."""
@@ -272,22 +314,26 @@ class StreamEngine:
             self.start()
 
     def stop(self) -> None:
-        if self._proc:
-            try:
-                os.killpg(os.getpgid(self._proc.pid), signal.SIGTERM)
-                self._proc.wait(timeout=5)
-            except (ProcessLookupError, subprocess.TimeoutExpired, OSError):
+        for proc in [self._ffmpeg_proc, self._proc]:
+            if proc:
                 try:
-                    os.killpg(os.getpgid(self._proc.pid), signal.SIGKILL)
-                except (ProcessLookupError, OSError):
-                    pass
-            self._proc = None
+                    os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+                    proc.wait(timeout=5)
+                except (ProcessLookupError, subprocess.TimeoutExpired, OSError):
+                    try:
+                        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+                    except (ProcessLookupError, OSError):
+                        pass
+        self._proc = None
+        self._ffmpeg_proc = None
         self._running = False
         decky.logger.info("Engine stopped")
 
     def get_viewer_url(self) -> str:
         ip = self._get_local_ip()
-        return f"http://{ip}:{self.ENGINE_PORT}/"
+        if self._method == "webrtc":
+            return f"http://{ip}:{self.WEBRTC_PORT}/screen/"
+        return f"http://{ip}:{self.MPEGTS_PORT}/"
 
     @staticmethod
     def _get_local_ip() -> str:
@@ -503,11 +549,12 @@ class Plugin:
     # -- Prysm Viewer (Approach 4) ------------------------------------------
 
     async def viewer_start(self) -> dict:
-        """Start WebRTC streaming via MediaMTX + FFmpeg."""
+        """Start streaming (MPEG-TS or WebRTC based on settings)."""
         quality = self.settings.get("viewer_quality", "720p30")
         audio = self.settings.get("audio_enabled", True)
+        method = self.settings.get("stream_method", "mpegts")
 
-        if not self.engine.start(quality, audio):
+        if not self.engine.start(quality, audio, method):
             return {"success": False, "error": "Failed to start stream engine"}
 
         self.current_mode = StreamMode.VIEWER
@@ -515,7 +562,7 @@ class Plugin:
         await decky.emit("mode_changed", StreamMode.VIEWER.value)
         await decky.emit("viewer_url", url)
 
-        decky.logger.info(f"Prysm WebRTC live at {url}")
+        decky.logger.info(f"Prysm live at {url}")
         return {"success": True, "url": url}
 
     async def viewer_stop(self) -> dict:

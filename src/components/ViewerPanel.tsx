@@ -29,7 +29,10 @@ const QUALITY_OPTIONS = [
   { data: "1080p60", label: "1080p 60fps (Best)" },
 ];
 
-const PRYSM_PURPLE = "#a855f7";
+const STREAM_METHOD_OPTIONS = [
+  { data: "mpegts", label: "MPEG-TS (Stable, ~500ms)" },
+  { data: "webrtc", label: "WebRTC (Low latency, ~200ms)" },
+];
 
 export function ViewerPanel({ status, settings, onRefresh, onSettingsRefresh }: ViewerPanelProps) {
   const [busy, setBusy] = useState(false);
@@ -116,6 +119,21 @@ export function ViewerPanel({ status, settings, onRefresh, onSettingsRefresh }: 
             selectedOption={settings.viewer_quality ?? "720p30"}
             onChange={async (opt: { data: string; label: string }) => {
               await setSetting("viewer_quality", opt.data);
+              onSettingsRefresh();
+            }}
+          />
+        </PanelSectionRow>
+      )}
+
+      {/* Stream method */}
+      {!isLive && (
+        <PanelSectionRow>
+          <DropdownItem
+            label="Stream Method"
+            rgOptions={STREAM_METHOD_OPTIONS}
+            selectedOption={settings.stream_method ?? "mpegts"}
+            onChange={async (opt: { data: string; label: string }) => {
+              await setSetting("stream_method", opt.data);
               onSettingsRefresh();
             }}
           />

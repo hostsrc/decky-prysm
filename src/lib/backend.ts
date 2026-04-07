@@ -27,6 +27,7 @@ export interface PrysmSettings {
   viewer_bitrate: number;
   viewer_password: string;
   capture_method: "pipewire" | "kmsgrab";
+  stream_method: "mpegts" | "webrtc";
   audio_enabled: boolean;
   last_voice_channel_id: string;
 }
