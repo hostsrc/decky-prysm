@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      - name: Get version
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Download MediaMTX
+        run: |
+          MEDIAMTX_VERSION="1.11.3"
+          curl -sL "https://github.com/bluenviron/mediamtx/releases/download/v${MEDIAMTX_VERSION}/mediamtx_v${MEDIAMTX_VERSION}_linux_amd64.tar.gz" \
+            | tar xz mediamtx
+          chmod +x mediamtx
+
+      - name: Create distribution zip
+        run: |
+          mkdir -p Prysm/{dist,backend,bin,defaults}
+          cp plugin.json package.json main.py LICENSE README.md Prysm/
+          cp dist/index.js Prysm/dist/
+          cp backend/stream_server.py Prysm/backend/
+          cp backend/mediamtx.yml Prysm/bin/
+          cp defaults/settings.json Prysm/defaults/
+          cp mediamtx Prysm/bin/
+          zip -r Prysm-${{ steps.version.outputs.version }}.zip Prysm/
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: Prysm-${{ steps.version.outputs.version }}.zip
+          generate_release_notes: true
