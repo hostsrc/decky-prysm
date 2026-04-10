@@ -27,7 +27,6 @@ Thumbs.db
 __pycache__/
 
 # Package manager
-pnpm-lock.yaml
 package-lock.json
 yarn.lock
 backend/prysm-engine/target/
