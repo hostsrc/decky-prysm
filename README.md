@@ -1,8 +1,17 @@
-# Prysm
+<p align="center">
+  <img src="assets/prysm-banner.png" alt="Prysm" width="100%">
+</p>
 
-**Stream your Steam Deck screen to any browser.**
+<p align="center">
+  <strong>Stream your Steam Deck screen to any browser.</strong><br>
+  Hardware accelerated, one-tap start from Game Mode.
+</p>
 
-A [Decky Loader](https://decky.xyz/) plugin that streams your Steam Deck to any device on your network - phone, tablet, PC. Hardware accelerated, one-tap start from Game Mode.
+<p align="center">
+  <a href="https://github.com/hostsrc/decky-prysm/releases"><img src="https://img.shields.io/github/v/release/hostsrc/decky-prysm?style=flat-square" alt="Release"></a>
+  <a href="https://github.com/hostsrc/decky-prysm/blob/main/LICENSE"><img src="https://img.shields.io/github/license/hostsrc/decky-prysm?style=flat-square" alt="License"></a>
+  <a href="https://github.com/hostsrc/decky-prysm/actions"><img src="https://img.shields.io/github/actions/workflow/status/hostsrc/decky-prysm/build.yml?style=flat-square&label=build" alt="Build"></a>
+</p>
 
 ## How It Works
 
