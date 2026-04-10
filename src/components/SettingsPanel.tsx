@@ -47,7 +47,7 @@ export function SettingsPanel({ settings, onRefresh }: SettingsPanelProps) {
       {/* Info */}
       <PanelSectionRow>
         <div style={{ fontSize: "11px", opacity: 0.5, padding: "4px 0" }}>
-          Prysm v0.1.0 — Split your screen everywhere
+          Prysm v0.1.0 - Split your screen everywhere
         </div>
       </PanelSectionRow>
     </>

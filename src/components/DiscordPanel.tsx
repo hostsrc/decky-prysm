@@ -117,7 +117,7 @@ export function DiscordPanel({ status, onRefresh }: DiscordPanelProps) {
         </PanelSectionRow>
       )}
 
-      {/* Quality dropdown — placeholder for future voice channel selector */}
+      {/* Quality dropdown - placeholder for future voice channel selector */}
       {status.discord_running && !isLive && (
         <PanelSectionRow>
           <DropdownItem

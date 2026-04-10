@@ -1,10 +1,10 @@
 """
-Prysm — Split your screen everywhere.
+Prysm - Split your screen everywhere.
 Decky Loader plugin for Steam Deck screen sharing.
 
 Two modes:
-  1. Discord Go Live — automates Vesktop/Discord launch + Go Live trigger
-  2. Prysm Viewer   — WebRTC-based viewer accessible from any browser
+  1. Discord Go Live - automates Vesktop/Discord launch + Go Live trigger
+  2. Prysm Viewer   - WebRTC-based viewer accessible from any browser
 """
 
 import asyncio
@@ -306,7 +306,7 @@ class StreamEngine:
         if not self._running:
             return
         if self._proc is not None and self._proc.poll() is not None:
-            decky.logger.warning(f"Engine exited ({self._proc.returncode}) — restarting")
+            decky.logger.warning(f"Engine exited ({self._proc.returncode}) - restarting")
             self._proc = None
             self._running = False
             # The engine manages FFmpeg restarts internally,
@@ -492,7 +492,7 @@ class Plugin:
 
         return {
             "success": self.discord_ipc.connected,
-            "error": "" if self.discord_ipc.connected else "Discord IPC not available yet — try again in a few seconds",
+            "error": "" if self.discord_ipc.connected else "Discord IPC not available yet - try again in a few seconds",
         }
 
     async def discord_get_voice(self) -> dict:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Prysm Stream Server — kmsgrab → VAAPI H.264 → MPEG-TS → HTTP → mpegts.js
+Prysm Stream Server - kmsgrab → VAAPI H.264 → MPEG-TS → HTTP → mpegts.js
 
 Dead simple. No WebRTC. No PipeWire portal. No Rust.
 Just FFmpeg piping MPEG-TS to an HTTP server.
@@ -253,7 +253,7 @@ def broadcast_loop():
             with clients_lock:
                 for q in clients:
                     q.append(chunk)
-                    # Keep queue tight — drop old data aggressively
+                    # Keep queue tight - drop old data aggressively
                     while len(q) > 100:
                         q.pop(0)
 

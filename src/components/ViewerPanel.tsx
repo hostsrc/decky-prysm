@@ -97,7 +97,7 @@ export function ViewerPanel({ status, settings, onRefresh, onSettingsRefresh }: 
 
   return (
     <>
-      {/* Start / Stop — always first */}
+      {/* Start / Stop - always first */}
       <PanelSectionRow>
         <ButtonItem
           layout="below"
@@ -144,7 +144,7 @@ export function ViewerPanel({ status, settings, onRefresh, onSettingsRefresh }: 
         </>
       )}
 
-      {/* Settings — only when not streaming */}
+      {/* Settings - only when not streaming */}
       {!isLive && (
         <>
           <PanelSectionRow>

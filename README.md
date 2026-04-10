@@ -2,7 +2,7 @@
 
 **Stream your Steam Deck screen to any browser.**
 
-A [Decky Loader](https://decky.xyz/) plugin that streams your Steam Deck to any device on your network — phone, tablet, PC. Hardware accelerated, one-tap start from Game Mode.
+A [Decky Loader](https://decky.xyz/) plugin that streams your Steam Deck to any device on your network - phone, tablet, PC. Hardware accelerated, one-tap start from Game Mode.
 
 ## How It Works
 
@@ -33,13 +33,13 @@ Steam Deck (Game Mode)
 
 - **One-tap streaming** from Steam Deck QAM (Quick Access Menu)
 - **Two streaming methods:**
-  - **MPEG-TS** — stable, ~500ms latency, works everywhere
-  - **WebRTC** — lower latency ~200ms via MediaMTX
-- **VAAPI hardware encoding** — H.264 on AMD GPU, near-zero CPU usage
-- **Quality presets** — 480p30, 720p30, 720p60, 1080p30, 1080p60
-- **Live stats** — viewers, bytes sent, encoder status in QAM
-- **Auto-restart** — recovers from capture failures
-- **No Desktop Mode required** — works entirely in Game Mode
+  - **MPEG-TS** - stable, ~500ms latency, works everywhere
+  - **WebRTC** - lower latency ~200ms via MediaMTX
+- **VAAPI hardware encoding** - H.264 on AMD GPU, near-zero CPU usage
+- **Quality presets** - 480p30, 720p30, 720p60, 1080p30, 1080p60
+- **Live stats** - viewers, bytes sent, encoder status in QAM
+- **Auto-restart** - recovers from capture failures
+- **No Desktop Mode required** - works entirely in Game Mode
 
 ## Install
 
