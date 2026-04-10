@@ -4,8 +4,8 @@
   "flags": ["root"],
   "api_version": 1,
   "publish": {
-    "tags": ["streaming", "discord", "screen-share", "webrtc", "casting"],
-    "description": "Split your screen everywhere. One-tap Discord Go Live + WebRTC viewer for Steam Deck.",
+    "tags": ["streaming", "screen-share", "capture", "casting"],
+    "description": "Stream your Steam Deck screen to any browser. MPEG-TS or WebRTC with VAAPI hardware encoding.",
     "image": "https://raw.githubusercontent.com/hostsrc/decky-prysm/main/assets/prysm-banner.png"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "decky-prysm",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Split your screen everywhere. Discord Go Live automation + WebRTC viewer for Steam Deck.",
   "type": "module",
   "scripts": {
