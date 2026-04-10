@@ -1,0 +1,69 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a1a"/>
+      <stop offset="100%" stop-color="#12122a"/>
+    </linearGradient>
+    <linearGradient id="prism" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#3b82f6"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1280" height="640" fill="url(#bg)"/>
+
+  <!-- Subtle grid -->
+  <g stroke="#ffffff" stroke-opacity="0.03" stroke-width="1">
+    <line x1="0" y1="160" x2="1280" y2="160"/>
+    <line x1="0" y1="320" x2="1280" y2="320"/>
+    <line x1="0" y1="480" x2="1280" y2="480"/>
+    <line x1="320" y1="0" x2="320" y2="640"/>
+    <line x1="640" y1="0" x2="640" y2="640"/>
+    <line x1="960" y1="0" x2="960" y2="640"/>
+  </g>
+
+  <!-- Glow behind prism -->
+  <ellipse cx="400" cy="320" rx="200" ry="200" fill="url(#glow)"/>
+
+  <!-- Prism icon -->
+  <path d="M400 140 L540 440 L260 440 Z" fill="none" stroke="url(#prism)" stroke-width="3"/>
+  <path d="M400 220 L480 400 L320 400 Z" fill="url(#prism)" opacity="0.1"/>
+
+  <!-- Light rays from prism -->
+  <g stroke-width="2" opacity="0.4">
+    <line x1="540" y1="350" x2="700" y2="280" stroke="#a855f7"/>
+    <line x1="540" y1="370" x2="700" y2="330" stroke="#7c3aed"/>
+    <line x1="540" y1="390" x2="700" y2="380" stroke="#3b82f6"/>
+    <line x1="540" y1="410" x2="700" y2="430" stroke="#06b6d4"/>
+  </g>
+
+  <!-- Text -->
+  <text x="720" y="290" font-family="system-ui, -apple-system, sans-serif" font-size="72" font-weight="800" letter-spacing="6" fill="white">PRYSM</text>
+  <text x="720" y="340" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="400" fill="#888" letter-spacing="1">Stream your Steam Deck everywhere</text>
+
+  <!-- Feature pills -->
+  <g font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600">
+    <rect x="720" y="380" width="100" height="30" rx="15" fill="#a855f720" stroke="#a855f740" stroke-width="1"/>
+    <text x="770" y="400" text-anchor="middle" fill="#a855f7">VAAPI</text>
+
+    <rect x="835" y="380" width="100" height="30" rx="15" fill="#3b82f620" stroke="#3b82f640" stroke-width="1"/>
+    <text x="885" y="400" text-anchor="middle" fill="#3b82f6">WebRTC</text>
+
+    <rect x="950" y="380" width="110" height="30" rx="15" fill="#06b6d420" stroke="#06b6d440" stroke-width="1"/>
+    <text x="1005" y="400" text-anchor="middle" fill="#06b6d4">MPEG-TS</text>
+
+    <rect x="720" y="420" width="120" height="30" rx="15" fill="#22c55e20" stroke="#22c55e40" stroke-width="1"/>
+    <text x="780" y="440" text-anchor="middle" fill="#22c55e">Low Latency</text>
+
+    <rect x="855" y="420" width="130" height="30" rx="15" fill="#f59e0b20" stroke="#f59e0b40" stroke-width="1"/>
+    <text x="920" y="440" text-anchor="middle" fill="#f59e0b">Game Mode</text>
+  </g>
+
+  <!-- Decky badge -->
+  <text x="720" y="500" font-family="system-ui, -apple-system, sans-serif" font-size="15" fill="#555">Decky Loader Plugin for Steam Deck</text>
+</svg>
