@@ -1,7 +1,7 @@
 {
   "name": "decky-prysm",
   "version": "0.2.0",
-  "description": "Split your screen everywhere. Discord Go Live automation + WebRTC viewer for Steam Deck.",
+  "description": "Stream your Steam Deck screen to any browser. MPEG-TS or WebRTC with VAAPI hardware encoding.",
   "type": "module",
   "scripts": {
     "build": "rollup -c",
