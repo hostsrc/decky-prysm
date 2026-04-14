@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["RTCIceGatherOptions","RTCIceGatherer"],"type":["OnGatheringCompleteHdlrFn","OnICEGathererStateChangeHdlrFn","OnLocalCandidateHdlrFn"]};

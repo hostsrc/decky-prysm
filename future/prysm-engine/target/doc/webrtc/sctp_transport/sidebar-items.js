@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["sctp_transport_capabilities","sctp_transport_state"],"struct":["RTCSctpTransport"],"type":["OnDataChannelHdlrFn","OnDataChannelOpenedHdlrFn"]};

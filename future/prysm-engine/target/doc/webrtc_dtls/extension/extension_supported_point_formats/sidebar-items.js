@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ELLIPTIC_CURVE_POINT_FORMAT_UNCOMPRESSED"],"struct":["ExtensionSupportedPointFormats"],"type":["EllipticCurvePointFormat"]};

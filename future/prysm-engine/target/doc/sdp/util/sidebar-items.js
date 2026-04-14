@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ATTRIBUTE_KEY"],"enum":["ConnectionRole"],"struct":["Codec"]};

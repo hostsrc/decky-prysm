@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DNSCLASS_ANY","DNSCLASS_CHAOS","DNSCLASS_CSNET","DNSCLASS_HESIOD","DNSCLASS_INET"],"enum":["DnsType","RCode"],"mod":["builder","header","name","parser","question","resource"],"struct":["DnsClass","Message"],"type":["OpCode"]};

@@ -1,0 +1,1 @@
+{"rustc":13850170861107434965,"features":"","declared_features":"","target":0,"profile":0,"path":0,"deps":[[857979250431893282,"build_script_build",false,9795341661576948938]],"local":[{"RerunIfChanged":{"output":"x86_64-unknown-linux-musl/release/build/typenum-9c0e4d472ae5783f/output","paths":["tests"]}}],"rustflags":[],"config":0,"compile_kind":0}

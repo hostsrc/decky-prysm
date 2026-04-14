@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["unmarshal_candidate"],"struct":["CandidateBase","CandidateBaseConfig"]};

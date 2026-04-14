@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["ABS_SEND_TIME_EXTENSION_SIZE"],"fn":["ntp2unix","unix2ntp"],"struct":["AbsSendTimeExtension"]};

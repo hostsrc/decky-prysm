@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["exact_size_buf"],"trait":["Marshal","MarshalSize","Unmarshal"]};

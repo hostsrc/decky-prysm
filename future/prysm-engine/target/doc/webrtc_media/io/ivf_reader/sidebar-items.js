@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["IVF_FILE_HEADER_SIGNATURE","IVF_FILE_HEADER_SIZE","IVF_FRAME_HEADER_SIZE"],"struct":["IVFFileHeader","IVFFrameHeader","IVFReader"]};

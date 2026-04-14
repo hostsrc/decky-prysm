@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["unpack_resource_body"],"mod":["a","aaaa","cname","mx","ns","opt","ptr","soa","srv","txt"],"struct":["Resource","ResourceHeader"],"trait":["ResourceBody"]};

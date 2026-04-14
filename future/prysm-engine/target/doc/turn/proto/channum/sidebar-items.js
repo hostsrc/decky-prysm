@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_CHANNEL_NUMBER","MIN_CHANNEL_NUMBER"],"struct":["ChannelNumber"]};

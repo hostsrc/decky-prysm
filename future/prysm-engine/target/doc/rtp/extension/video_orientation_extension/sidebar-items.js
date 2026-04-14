@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["VIDEO_ORIENTATION_EXTENSION_SIZE"],"enum":["CameraDirection","VideoRotation"],"struct":["VideoOrientationExtension"]};

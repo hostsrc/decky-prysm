@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["RTPCodecType"],"struct":["RTCRtpCodecCapability","RTCRtpCodecParameters","RTCRtpHeaderExtensionCapability","RTCRtpHeaderExtensionParameters","RTCRtpParameters"]};

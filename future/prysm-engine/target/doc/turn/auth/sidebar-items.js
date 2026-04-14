@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["generate_auth_key","generate_long_term_credentials"],"struct":["LongTermAuthHandler"],"trait":["AuthHandler"]};

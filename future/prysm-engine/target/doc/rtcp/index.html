@@ -1,0 +1,31 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Package rtcp implements encoding and decoding of RTCP packets according to RFCs 3550 and 5506."><title>rtcp - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="rtcp" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.1 (01f6ddf75 2026-02-11)" data-channel="1.93.1" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../static.files/storage-e2aeef58.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Crate rtcp</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../rtcp/index.html">rtcp</a><span class="version">0.12.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#modules">Crate Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#enums" title="Enums">Enums</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>rtcp</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/rtcp/lib.rs.html#1-59">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Package rtcp implements encoding and decoding of RTCP packets according to RFCs 3550 and 5506.</p>
+<p>RTCP is a sister protocol of the Real-time Transport Protocol (RTP). Its basic functionality
+and packet structure is defined in RFC 3550. RTCP provides out-of-band statistics and control
+information for an RTP session. It partners with RTP in the delivery and packaging of multimedia data,
+but does not transport any media data itself.</p>
+<p>The primary function of RTCP is to provide feedback on the quality of service (QoS)
+in media distribution by periodically sending statistics information such as transmitted octet
+and packet counts, packet loss, packet delay variation, and round-trip delay time to participants
+in a streaming multimedia session. An application may use this information to control quality of
+service parameters, perhaps by limiting flow, or using a different codec.</p>
+<p>Decoding RTCP packets:</p>
+<div class="example-wrap"><pre class="language-nobuild"><code>     let pkt = rtcp::unmarshal(&amp;rtcp_data).unwrap();
+
+     if let Some(e) = pkt
+          .as_any()
+          .downcast_ref::&lt;PictureLossIndication&gt;()
+      {
+
+      }
+     else if let Some(e) = packet
+          .as_any()
+          .downcast_ref::&lt;Goodbye&gt;(){}
+     ....</code></pre></div>
+<p>Encoding RTCP packets:</p>
+<div class="example-wrap"><pre class="language-nobuild"><code>     let pkt = PictureLossIndication{
+         sender_ssrc: sender_ssrc,
+         media_ssrc: media_ssrc
+     };
+
+     let pli_data = pkt.marshal().unwrap();
+     // ...</code></pre></div></div></details><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="compound_packet/index.html" title="mod rtcp::compound_packet">compound_<wbr>packet</a></dt><dt><a class="mod" href="extended_report/index.html" title="mod rtcp::extended_report">extended_<wbr>report</a></dt><dt><a class="mod" href="goodbye/index.html" title="mod rtcp::goodbye">goodbye</a></dt><dt><a class="mod" href="header/index.html" title="mod rtcp::header">header</a></dt><dt><a class="mod" href="packet/index.html" title="mod rtcp::packet">packet</a></dt><dt><a class="mod" href="payload_feedbacks/index.html" title="mod rtcp::payload_feedbacks">payload_<wbr>feedbacks</a></dt><dt><a class="mod" href="raw_packet/index.html" title="mod rtcp::raw_packet">raw_<wbr>packet</a></dt><dt><a class="mod" href="receiver_report/index.html" title="mod rtcp::receiver_report">receiver_<wbr>report</a></dt><dt><a class="mod" href="reception_report/index.html" title="mod rtcp::reception_report">reception_<wbr>report</a></dt><dt><a class="mod" href="sender_report/index.html" title="mod rtcp::sender_report">sender_<wbr>report</a></dt><dt><a class="mod" href="source_description/index.html" title="mod rtcp::source_description">source_<wbr>description</a></dt><dt><a class="mod" href="transport_feedbacks/index.html" title="mod rtcp::transport_feedbacks">transport_<wbr>feedbacks</a></dt></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.Error.html" title="enum rtcp::Error">Error</a></dt></dl></section></div></main></body></html>

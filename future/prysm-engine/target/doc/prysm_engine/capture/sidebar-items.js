@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["MAX_RESTARTS","RTP_RECV_PORT"],"fn":["build_ffmpeg_cmd","spawn_ffmpeg","start_capture_supervisor"],"struct":["QualityPreset"]};

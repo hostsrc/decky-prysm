@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["TimerIdRefresh"],"struct":["PeriodicTimer"],"trait":["PeriodicTimerTimeoutHandler"]};

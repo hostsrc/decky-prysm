@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["SCHEME","SCHEME_SECURE"],"struct":["Uri"]};

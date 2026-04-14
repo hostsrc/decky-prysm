@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Error"],"fn":["flatten_errs"],"type":["OnErrorHdlrFn","Result"]};

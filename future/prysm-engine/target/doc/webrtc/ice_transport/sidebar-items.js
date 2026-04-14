@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["ice_candidate","ice_candidate_pair","ice_candidate_type","ice_connection_state","ice_gatherer","ice_gatherer_state","ice_gathering_state","ice_parameters","ice_protocol","ice_role","ice_server","ice_transport_state"],"struct":["RTCIceTransport"],"type":["OnConnectionStateChangeHdlrFn","OnSelectedCandidatePairChangeHdlrFn"]};

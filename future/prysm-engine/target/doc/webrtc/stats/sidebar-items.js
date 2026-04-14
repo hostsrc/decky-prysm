@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["RTCStatsType","SourceStatsType","StatsReportType"],"mod":["stats_collector"],"struct":["CertificateStats","CodecStats","DataChannelStats","ICECandidatePairStats","ICECandidateStats","ICETransportStats","InboundRTPStats","OutboundRTPStats","PeerConnectionStats","RemoteInboundRTPStats","RemoteOutboundRTPStats","StatsReport"]};

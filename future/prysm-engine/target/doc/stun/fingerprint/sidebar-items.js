@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["FINGERPRINT","FINGERPRINT_SIZE","FINGERPRINT_XOR_VALUE"],"fn":["fingerprint_value"],"struct":["FingerprintAttr"]};

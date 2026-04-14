@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CandidatePairState","CandidateType"],"mod":["candidate_base","candidate_host","candidate_peer_reflexive","candidate_relay","candidate_server_reflexive"],"struct":["CandidatePair","CandidateRelatedAddress"],"trait":["Candidate"]};

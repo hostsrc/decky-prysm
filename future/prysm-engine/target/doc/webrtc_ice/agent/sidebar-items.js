@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["agent_config","agent_gather","agent_selector","agent_stats","agent_transport"],"struct":["Agent"],"type":["GatherCandidateCancelFn","OnCandidateHdlrFn","OnConnectionStateChangeHdlrFn","OnSelectedCandidatePairChangeHdlrFn"]};

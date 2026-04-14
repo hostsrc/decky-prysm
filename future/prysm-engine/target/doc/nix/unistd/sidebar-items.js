@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ForkResult"],"fn":["close","execv","execve","execvp","fork","getpgid","getpgrp","getpid","getppid","getsid","pause","pipe","read","setpgid","setsid","sleep","write"],"mod":["alarm"],"struct":["Pid"]};

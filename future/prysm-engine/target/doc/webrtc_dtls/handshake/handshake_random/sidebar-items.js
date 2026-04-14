@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["HANDSHAKE_RANDOM_LENGTH","RANDOM_BYTES_LENGTH"],"struct":["HandshakeRandom"]};

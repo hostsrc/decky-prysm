@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_PORT","DEFAULT_TLS_PORT","PROTO_TCP","PROTO_UDP"],"fn":["allocate_request","create_permission_request","refresh_request","send_indication"],"mod":["addr","chandata","channum","data","dontfrag","evenport","lifetime","peeraddr","relayaddr","reqfamily","reqtrans","rsrvtoken"],"struct":["Protocol"]};

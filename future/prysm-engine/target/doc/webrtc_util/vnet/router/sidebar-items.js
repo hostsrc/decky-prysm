@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["ROUTER_ID_CTR","Router","RouterConfig","RouterInternal"],"trait":["Nic"],"type":["ChunkFilterFn"]};

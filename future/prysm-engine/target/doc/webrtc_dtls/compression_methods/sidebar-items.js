@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CompressionMethodId"],"fn":["default_compression_methods"],"struct":["CompressionMethods"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["TYPE_TCC_DELTA_SCALE_FACTOR"],"enum":["PacketStatusChunk","StatusChunkTypeTcc","SymbolSizeTypeTcc","SymbolTypeTcc"],"struct":["RecvDelta","RunLengthChunk","StatusVectorChunk","TransportLayerCc"]};

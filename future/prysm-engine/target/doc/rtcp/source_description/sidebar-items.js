@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["SdesType"],"struct":["SourceDescription","SourceDescriptionChunk","SourceDescriptionItem"]};

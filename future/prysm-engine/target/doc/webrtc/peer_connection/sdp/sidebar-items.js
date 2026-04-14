@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["sdp_type","session_description"]};

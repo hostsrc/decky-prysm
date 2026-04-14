@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["math_rand_alpha"],"mod":["certificate","configuration","offer_answer_options","peer_connection_state","policy","sdp","signaling_state"],"struct":["RTCPeerConnection"],"type":["OnDataChannelHdlrFn","OnICEConnectionStateChangeHdlrFn","OnNegotiationNeededHdlrFn","OnPeerConnectionStateChangeHdlrFn","OnSignalingStateChangeHdlrFn","OnTrackHdlrFn"]};

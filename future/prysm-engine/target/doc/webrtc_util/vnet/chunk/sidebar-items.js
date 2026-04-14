@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["base36"],"trait":["Chunk"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["allocation_manager","channel_bind","five_tuple","permission"],"struct":["Allocation","AllocationInfo"],"type":["AllocationMap"]};

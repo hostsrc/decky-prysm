@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["data_channel_init","data_channel_message","data_channel_parameters","data_channel_state"],"struct":["RTCDataChannel"],"type":["OnCloseHdlrFn","OnMessageHdlrFn","OnOpenHdlrFn"]};

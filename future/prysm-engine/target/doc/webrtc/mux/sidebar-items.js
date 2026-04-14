@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["endpoint","mux_func"],"struct":["Config","Mux"]};
