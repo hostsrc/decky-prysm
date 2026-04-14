@@ -29,7 +29,7 @@ __pycache__/
 # Package manager
 package-lock.json
 yarn.lock
-backend/prysm-engine/target/
+backend/src/prysm-engine/target/
 
 # Distribution
 *.zip

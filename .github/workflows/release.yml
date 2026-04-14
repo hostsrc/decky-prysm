@@ -43,7 +43,7 @@ jobs:
           cp plugin.json package.json main.py LICENSE README.md Prysm/
           cp dist/index.js Prysm/dist/
           cp server/stream_server.py Prysm/backend/
-          cp backend/mediamtx.yml Prysm/bin/
+          cp bin/mediamtx.yml Prysm/bin/
           cp defaults/settings.json Prysm/defaults/
           cp mediamtx Prysm/bin/
           zip -r Prysm-${{ steps.version.outputs.version }}.zip Prysm/

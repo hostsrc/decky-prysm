@@ -15,7 +15,7 @@ dist: build
 	cp plugin.json package.json main.py LICENSE README.md $(DIST_DIR)/Prysm/
 	cp dist/index.js $(DIST_DIR)/Prysm/dist/
 	cp server/stream_server.py $(DIST_DIR)/Prysm/backend/
-	cp backend/mediamtx.yml $(DIST_DIR)/Prysm/bin/
+	cp bin/mediamtx.yml $(DIST_DIR)/Prysm/bin/
 	cp defaults/settings.json $(DIST_DIR)/Prysm/defaults/
 	@if [ -f /tmp/mediamtx ]; then \
 		cp /tmp/mediamtx $(DIST_DIR)/Prysm/bin/mediamtx; \
