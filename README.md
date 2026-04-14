@@ -145,9 +145,11 @@ decky-prysm/
 │   │   └── usePrysmStatus.ts   # Status polling
 │   └── lib/backend.ts          # Typed backend callables
 ├── main.py                     # Decky Python backend
+├── server/
+│   └── stream_server.py        # MPEG-TS HTTP server
 ├── backend/
-│   ├── stream_server.py        # MPEG-TS HTTP server
-│   └── mediamtx.yml            # MediaMTX WebRTC config
+│   ├── mediamtx.yml            # MediaMTX WebRTC config
+│   └── prysm-engine/           # Rust streaming engine (future)
 ├── bin/
 │   └── mediamtx               # MediaMTX binary (WebRTC mode)
 ├── dist/index.js               # Built frontend bundle
