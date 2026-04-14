@@ -13,6 +13,14 @@
   <a href="https://github.com/hostsrc/decky-prysm/actions"><img src="https://img.shields.io/github/actions/workflow/status/hostsrc/decky-prysm/build.yml?style=flat-square&label=build" alt="Build"></a>
 </p>
 
+## Showcase
+
+<p align="center">
+  <img src="assets/preview_home.png" alt="Prysm home panel" width="32%">
+  <img src="assets/preview_start.jpeg" alt="Prysm start streaming" width="32%">
+  <img src="assets/preview_stop.jpeg" alt="Prysm stop streaming" width="32%">
+</p>
+
 ## How It Works
 
 ```
