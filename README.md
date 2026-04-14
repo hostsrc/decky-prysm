@@ -9,7 +9,7 @@
 
 <p align="center">
   <a href="https://github.com/hostsrc/decky-prysm/releases"><img src="https://img.shields.io/github/v/release/hostsrc/decky-prysm?style=flat-square" alt="Release"></a>
-  <a href="https://github.com/hostsrc/decky-prysm/blob/main/LICENSE"><img src="https://img.shields.io/github/license/hostsrc/decky-prysm?style=flat-square" alt="License"></a>
+  <a href="https://github.com/hostsrc/decky-prysm/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0-blue?style=flat-square" alt="License: GPL-3.0"></a>
   <a href="https://github.com/hostsrc/decky-prysm/actions"><img src="https://img.shields.io/github/actions/workflow/status/hostsrc/decky-prysm/build.yml?style=flat-square&label=build" alt="Build"></a>
 </p>
 
@@ -177,4 +177,19 @@ decky-prysm/
 
 ## License
 
-GPL-3.0-or-later
+This project is licensed under the **GNU General Public License v3.0** (GPL-3.0).
+
+The Decky Plugin Template portions are licensed under **BSD-3-Clause** (see full LICENSE file).
+
+### What GPL-3.0 means for you
+
+**If you just use Prysm** - do whatever you want, it's free.
+
+**If you fork or modify Prysm** - you must:
+- Keep the source code open (you can't make it proprietary)
+- Include this same GPL-3.0 license
+- State what you changed
+
+**If you distribute Prysm** - same as above, plus you must provide the source code.
+
+In short: you can use, study, modify, and share it freely - but you can't close-source it. Anything built on Prysm stays open.
