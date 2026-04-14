@@ -14,7 +14,7 @@ dist: build
 	mkdir -p $(DIST_DIR)/Prysm/{dist,backend,bin,defaults}
 	cp plugin.json package.json main.py LICENSE README.md $(DIST_DIR)/Prysm/
 	cp dist/index.js $(DIST_DIR)/Prysm/dist/
-	cp backend/stream_server.py $(DIST_DIR)/Prysm/backend/
+	cp server/stream_server.py $(DIST_DIR)/Prysm/backend/
 	cp backend/mediamtx.yml $(DIST_DIR)/Prysm/bin/
 	cp defaults/settings.json $(DIST_DIR)/Prysm/defaults/
 	@if [ -f /tmp/mediamtx ]; then \
@@ -28,10 +28,10 @@ dist: build
 
 deploy: build
 	scp dist/index.js main.py deck@$(DECK_IP):/tmp/
-	scp backend/stream_server.py deck@$(DECK_IP):/tmp/stream_server.py
+	scp server/stream_server.py deck@$(DECK_IP):/tmp/stream_server.py
 	ssh deck@$(DECK_IP) "sudo cp /tmp/index.js $(PLUGIN_DIR)/dist/index.js && \
 		sudo cp /tmp/main.py $(PLUGIN_DIR)/main.py && \
-		sudo cp /tmp/stream_server.py $(PLUGIN_DIR)/backend/stream_server.py && \
+		sudo cp /tmp/stream_server.py $(PLUGIN_DIR)/server/stream_server.py && \
 		sudo systemctl restart plugin_loader && \
 		sudo pkill -f steamwebhelper"
 	@echo "Deployed to $(DECK_IP)"

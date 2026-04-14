@@ -209,7 +209,7 @@ class StreamEngine:
         self._running = False
         self._method = "mpegts"
         plugin_dir = Path(decky.DECKY_PLUGIN_DIR)
-        self._server_script = str(plugin_dir / "backend" / "stream_server.py")
+        self._server_script = str(plugin_dir / "server/stream_server.py")
         self.MEDIAMTX_BIN = str(plugin_dir / "bin" / "mediamtx")
         self.MEDIAMTX_CFG = str(plugin_dir / "bin" / "mediamtx.yml")
         decky.logger.info(f"Stream server: {self._server_script}")
