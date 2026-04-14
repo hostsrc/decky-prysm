@@ -155,7 +155,7 @@ decky-prysm/
 ├── package.json
 ├── Makefile                    # build/dist/deploy commands
 ├── install.sh                  # One-liner installer
-└── LICENSE                     # GPL-2.0
+└── LICENSE                     # BSD-3-Clause
 ```
 
 ## Roadmap
@@ -175,4 +175,4 @@ decky-prysm/
 
 ## License
 
-GPL-2.0-or-later
+BSD-3-Clause
